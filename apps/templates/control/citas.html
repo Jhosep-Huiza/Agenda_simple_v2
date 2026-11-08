@@ -1,0 +1,264 @@
+{% extends 'control/base.html' %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <h1>Citas</h1>
+    <p>Programa cada visita con su fecha, hora, lugar y estado.</p>
+</div>
+
+
+<!-- REGISTRAR O EDITAR CITA -->
+<details class="plegable" {% if editar %}open{% endif %}>
+
+    <summary>
+        {% if editar %}
+            Editar cita
+        {% else %}
+            Agendar cita
+        {% endif %}
+    </summary>
+
+    <form method="post" action="{% url 'guardar_cita' %}">
+
+        {% csrf_token %}
+
+        {% if editar %}
+            <input type="hidden" name="id_cita" value="{{ editar.id }}">
+        {% endif %}
+
+        <div class="rejilla">
+
+            <!-- CLIENTE -->
+            <div class="campo">
+                <label for="id_cliente">Cliente</label>
+
+                <select name="id_cliente" id="id_cliente" required>
+
+                    <option value="">Selecciona un cliente</option>
+
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}"
+                            {% if editar.cliente_id == cliente.id %}selected{% endif %}>
+                            {{ cliente.nombre }} {{ cliente.apellido }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+            </div>
+
+            <!-- ASUNTO -->
+            <div class="campo">
+                <label for="id_asunto">Asunto</label>
+
+                <input type="text"
+                       id="id_asunto"
+                       name="asunto"
+                       maxlength="200"
+                       value="{{ editar.asunto|default:'' }}"
+                       required>
+            </div>
+
+            <!-- FECHA -->
+            <div class="campo">
+                <label for="id_fecha">Fecha</label>
+
+                <input type="date"
+                       id="id_fecha"
+                       name="fecha"
+                       value="{% if editar %}{{ editar.fecha|date:'Y-m-d' }}{% endif %}"
+                       required>
+            </div>
+
+            <!-- HORA -->
+            <div class="campo">
+                <label for="id_hora">Hora</label>
+
+                <input type="time"
+                       id="id_hora"
+                       name="hora"
+                       value="{% if editar %}{{ editar.hora|time:'H:i' }}{% endif %}"
+                       required>
+            </div>
+
+            <!-- DIRECCIÓN -->
+            <div class="campo">
+                <label for="id_direccion">Dirección</label>
+
+                <input type="text"
+                       id="id_direccion"
+                       name="direccion"
+                       maxlength="255"
+                       value="{{ editar.direccion|default:'' }}"
+                       required>
+            </div>
+
+            <!-- REFERENCIA -->
+            <div class="campo">
+                <label for="id_referencia">Referencia <small>(opcional)</small></label>
+
+                <input type="text"
+                       id="id_referencia"
+                       name="referencia"
+                       maxlength="255"
+                       value="{{ editar.referencia|default:'' }}">
+            </div>
+
+            <!-- NOTAS -->
+            <div class="campo ancho">
+                <label for="id_notas">Notas <small>(opcional)</small></label>
+
+                <textarea id="id_notas"
+                          name="notas"
+                          rows="3">{{ editar.notas|default:'' }}</textarea>
+            </div>
+
+            <!-- ESTADO -->
+            <div class="campo ancho">
+                <label for="id_estado">Estado</label>
+
+                <select name="estado" id="id_estado" required>
+                    {% for valor, etiqueta in estados %}
+                        <option value="{{ valor }}"
+                            {% if editar.estado == valor or not editar and valor == 'Pendiente' %}selected{% endif %}>
+                            {{ etiqueta }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="botones">
+
+                <button type="submit" class="guardar">
+                    {% if editar %}
+                        Actualizar cita
+                    {% else %}
+                        Guardar cita
+                    {% endif %}
+                </button>
+
+                <a href="{% url 'citas' %}" class="boton limpiar">
+                    Limpiar
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</details>
+
+
+<!-- LISTA DE CITAS -->
+<section>
+
+    <div class="encabezado-lista">
+
+        <h2>
+            Tus citas
+            <span>{{ citas|length }} en total</span>
+        </h2>
+
+        <form method="get" class="buscar">
+
+            <input type="search"
+                   name="buscar"
+                   value="{{ buscar }}"
+                   aria-label="Buscar cita"
+                   placeholder="Buscar cliente, asunto o estado">
+
+            <button type="submit" class="buscar-btn">
+                Buscar
+            </button>
+
+            <a href="{% url 'citas' %}" class="boton limpiar">
+                Ver todas
+            </a>
+
+        </form>
+
+    </div>
+
+    <ol class="agenda">
+
+        {% for cita in citas %}
+
+        <li class="cita estado-{{ cita.estado|slugify }}">
+
+            <!-- CUÁNDO -->
+            <div class="cita-cuando">
+                <span class="cita-hora">{{ cita.hora|time:'H:i' }}</span>
+                <span class="cita-fecha">{{ cita.fecha|date:'d/m/Y' }}</span>
+            </div>
+
+            <!-- DETALLE -->
+            <div class="cita-cuerpo">
+
+                <div class="cita-asunto">{{ cita.asunto }}</div>
+                <div class="cita-cliente">{{ cita.cliente }}</div>
+
+                <p class="cita-lugar">
+                    {{ cita.direccion }}
+                    {% if cita.referencia %}
+                        <br>Ref.: {{ cita.referencia }}
+                    {% endif %}
+                </p>
+
+                {% if cita.notas %}
+                    <p class="cita-notas">{{ cita.notas }}</p>
+                {% endif %}
+
+            </div>
+
+            <!-- ESTADO Y ACCIONES -->
+            <div class="cita-lado">
+
+                <span class="estado">{{ cita.estado }}</span>
+
+                <div class="acciones">
+
+                    <!-- EDITAR -->
+                    <a href="{% url 'citas' %}?editar={{ cita.id }}"
+                       class="boton editar">
+                        Editar
+                    </a>
+
+                    <!-- ELIMINAR -->
+                    <form method="post"
+                          class="form-eliminar"
+                          action="{% url 'eliminar_cita' cita.id %}">
+
+                        {% csrf_token %}
+
+                        <button type="submit" class="eliminar">
+                            Eliminar
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            <p class="registro">
+                N.º {{ cita.id }}
+                · Creada {{ cita.created_at|date:'d/m/Y H:i' }}
+                · Actualizada {{ cita.updated_at|date:'d/m/Y H:i' }}
+            </p>
+
+        </li>
+
+        {% empty %}
+
+        <li class="vacio">
+            Aún no hay citas. Agenda la primera con el formulario de arriba.
+        </li>
+
+        {% endfor %}
+
+    </ol>
+
+</section>
+
+{% endblock %}

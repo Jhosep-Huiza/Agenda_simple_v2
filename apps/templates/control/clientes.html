@@ -1,0 +1,200 @@
+{% extends 'control/base.html' %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <h1>Clientes</h1>
+    <p>Guarda los datos de contacto de las personas que atiendes.</p>
+</div>
+
+
+<!-- REGISTRAR O EDITAR CLIENTE -->
+<details class="plegable" {% if editar %}open{% endif %}>
+
+    <summary>
+        {% if editar %}
+            Editar cliente
+        {% else %}
+            Registrar cliente
+        {% endif %}
+    </summary>
+
+    <form method="post" action="{% url 'guardar_cliente' %}">
+
+        {% csrf_token %}
+
+        {% if editar %}
+            <input type="hidden" name="id_cliente" value="{{ editar.id }}">
+        {% endif %}
+
+        <div class="rejilla">
+
+            <div class="campo">
+                <label for="id_nombre">Nombre</label>
+                <input type="text"
+                       id="id_nombre"
+                       name="nombre"
+                       maxlength="100"
+                       value="{{ editar.nombre|default:'' }}"
+                       required>
+            </div>
+
+            <div class="campo">
+                <label for="id_apellido">Apellido</label>
+                <input type="text"
+                       id="id_apellido"
+                       name="apellido"
+                       maxlength="100"
+                       value="{{ editar.apellido|default:'' }}"
+                       required>
+            </div>
+
+            <div class="campo">
+                <label for="id_correo">Correo</label>
+                <input type="email"
+                       id="id_correo"
+                       name="correo"
+                       maxlength="150"
+                       value="{{ editar.correo|default:'' }}"
+                       required>
+            </div>
+
+            <div class="campo">
+                <label for="id_dni">DNI</label>
+                <input type="text"
+                       id="id_dni"
+                       name="dni"
+                       maxlength="8"
+                       minlength="8"
+                       pattern="[0-9]{8}"
+                       inputmode="numeric"
+                       title="8 dígitos"
+                       value="{{ editar.dni|default:'' }}"
+                       required>
+            </div>
+
+            <div class="campo ancho">
+                <label for="id_telefono">Teléfono <small>(opcional)</small></label>
+                <input type="text"
+                       id="id_telefono"
+                       name="telefono"
+                       maxlength="30"
+                       value="{{ editar.telefono|default:'' }}">
+            </div>
+
+            <div class="botones">
+
+                <button type="submit" class="guardar">
+                    {% if editar %}
+                        Actualizar cliente
+                    {% else %}
+                        Guardar cliente
+                    {% endif %}
+                </button>
+
+                <a href="{% url 'clientes' %}" class="boton limpiar">
+                    Limpiar
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</details>
+
+
+<!-- LISTA DE CLIENTES -->
+<section>
+
+    <div class="encabezado-lista">
+
+        <h2>
+            Tus clientes
+            <span>{{ clientes|length }} en total</span>
+        </h2>
+
+        <form method="get" class="buscar">
+
+            <input type="search"
+                   name="buscar"
+                   value="{{ buscar }}"
+                   aria-label="Buscar cliente"
+                   placeholder="Buscar nombre, apellido o DNI">
+
+            <button type="submit" class="buscar-btn">
+                Buscar
+            </button>
+
+            <a href="{% url 'clientes' %}" class="boton limpiar">
+                Ver todos
+            </a>
+
+        </form>
+
+    </div>
+
+    <ul class="directorio">
+
+        {% for cliente in clientes %}
+
+        <li class="contacto">
+
+            <h3>{{ cliente.nombre }} {{ cliente.apellido }}</h3>
+
+            <dl class="datos">
+                <dt>Correo</dt>
+                <dd>{{ cliente.correo }}</dd>
+
+                <dt>DNI</dt>
+                <dd>{{ cliente.dni }}</dd>
+
+                <dt>Teléfono</dt>
+                <dd>{{ cliente.telefono|default:'-' }}</dd>
+            </dl>
+
+            <p class="registro">
+                N.º {{ cliente.id }}
+                · Creado {{ cliente.created_at|date:'d/m/Y H:i' }}
+                · Actualizado {{ cliente.updated_at|date:'d/m/Y H:i' }}
+            </p>
+
+            <div class="acciones">
+
+                <!-- EDITAR -->
+                <a href="{% url 'clientes' %}?editar={{ cliente.id }}"
+                   class="boton editar">
+                    Editar
+                </a>
+
+                <!-- ELIMINAR -->
+                <form method="post"
+                      class="form-eliminar"
+                      action="{% url 'eliminar_cliente' cliente.id %}">
+
+                    {% csrf_token %}
+
+                    <button type="submit" class="eliminar">
+                        Eliminar
+                    </button>
+
+                </form>
+
+            </div>
+
+        </li>
+
+        {% empty %}
+
+        <li class="vacio">
+            Aún no hay clientes. Registra el primero con el formulario de arriba.
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+</section>
+
+{% endblock %}

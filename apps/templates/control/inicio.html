@@ -1,0 +1,21 @@
+{% extends 'control/base.html' %}
+
+{% block content %}
+
+<section class="portada">
+
+    <h1>Hola, {{ user.first_name|default:user.username }}</h1>
+
+    <p>
+        Tienes <strong>{{ total_clientes }}</strong> clientes
+        y <strong>{{ total_citas }}</strong> citas registradas.
+    </p>
+
+    <div class="accesos">
+        <a href="{% url 'citas' %}" class="boton principal">Ver citas</a>
+        <a href="{% url 'clientes' %}" class="boton">Ver clientes</a>
+    </div>
+
+</section>
+
+{% endblock %}
